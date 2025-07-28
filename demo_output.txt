@@ -1,0 +1,93 @@
+NextCare2 Role-Based Access Control System
+==================================================
+
+Key Features Implemented:
+------------------------
+1. Settings Window with Role-Based User Management
+   - Admin: Can manage all users (admin, manager, engineer)
+   - Manager: Can manage engineers only
+   - Engineer: No access to settings
+
+2. Enhanced Dashboard with Settings Button
+   - Settings button visible to admin and manager roles only
+   - Role-based machine filtering for engineers
+
+3. Updated Configuration Window
+   - Admin: Full machine and parameter management
+   - Manager: Parameter editing for all machines, no machine CRUD
+   - Engineer: No access to configuration page
+
+4. Enhanced Database Operations
+   - User CRUD operations with role validation
+   - Machine assignment management
+   - Role-based data filtering
+
+5. Advanced Authentication System
+   - Granular permission checks
+   - Role-based access control functions
+   - Session management
+
+User Roles and Permissions:
+--------------------------
+
+ADMIN - System Administrator:
+  • Full access to all features
+  • Add/edit/delete all users
+  • Add/edit/delete machines
+  • Add/edit/delete parameters
+  • Access all settings
+  • Assign machines to any user
+  • View all machines in dashboard
+
+MANAGER - Plant Manager:
+  • View all machines
+  • Add/edit/delete engineers only
+  • Add/edit parameters (all machines)
+  • Access engineer management settings
+  • Assign machines to engineers
+  • View all machines in dashboard
+
+ENGINEER - Maintenance Engineer:
+  • View assigned machines only
+  • Read-only dashboard access
+  • No configuration access
+  • No settings access
+  • No user management access
+
+==================================================
+Implementation Complete!
+
+To run the application:
+  python run_nextcare.py
+
+To test the RBAC system:
+  python test_rbac.py
+
+Default login credentials:
+  Admin:    admin/admin
+  Manager:  manager1/manager1
+  Engineer: engineer1/engineer1
+
+File Structure:
+--------------------
+  src/ui/settings_window.py
+    New Settings window with user management
+
+  src/ui/dashboard_window.py
+    Updated with Settings button and role-based access
+
+  src/ui/config_window.py
+    Enhanced with role-based restrictions
+
+  src/database/operations.py
+    Extended with user management operations
+
+  src/utils/auth.py
+    Enhanced with granular permission checks
+
+  test_rbac.py
+    Test script for validating RBAC functionality
+
+  RBAC_IMPLEMENTATION.md
+    Comprehensive documentation
+

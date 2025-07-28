@@ -2,7 +2,7 @@
 Authentication and authorization utilities
 """
 
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import logging
 
 # Use try/except to handle both relative and absolute imports
