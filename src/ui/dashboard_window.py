@@ -154,6 +154,9 @@ class ParameterDetailDialog(QDialog):
         
     def setup_ui(self):
         """Setup the detail dialog UI"""
+        # Ensure dialog has proper background
+        self.setStyleSheet(f"QDialog {{ background-color: {BACKGROUND_COLOR}; }}")
+        
         layout = QVBoxLayout()
         
         # Header
@@ -301,11 +304,12 @@ class DashboardWindow(QMainWindow):
     def setup_ui(self):
         """Setup the main UI"""
         central_widget = QWidget()
+        central_widget.setStyleSheet(f"background-color: {BACKGROUND_COLOR};")  # Ensure background is set
         self.setCentralWidget(central_widget)
         
         layout = QVBoxLayout(central_widget)
-        layout.setContentsMargins(20, 10, 20, 20)  # Reduced top margin from default to 10
-        layout.setSpacing(10)
+        layout.setContentsMargins(20, 5, 20, 20)  # Reduced top margin from 10 to 5
+        layout.setSpacing(8)  # Reduced spacing from 10 to 8
         
         # Header
         self.create_header(layout)
@@ -329,7 +333,7 @@ class DashboardWindow(QMainWindow):
             font-size: 24px;
             font-weight: bold;
             color: {PRIMARY_COLOR};
-            padding: 16px 0px;
+            padding: 8px 0px;
         """)
         header_layout.addWidget(title_label)
         

@@ -44,6 +44,9 @@ class MachineDialog(QDialog):
     
     def setup_ui(self):
         """Setup the dialog UI"""
+        # Ensure dialog has proper background
+        self.setStyleSheet(f"QDialog {{ background-color: {BACKGROUND_COLOR}; }}")
+        
         layout = QVBoxLayout()
         
         # Form layout
@@ -131,6 +134,9 @@ class ParameterDialog(QDialog):
     
     def setup_ui(self):
         """Setup the dialog UI"""
+        # Ensure dialog has proper background
+        self.setStyleSheet(f"QDialog {{ background-color: {BACKGROUND_COLOR}; }}")
+        
         layout = QVBoxLayout()
         
         # Form layout
@@ -272,9 +278,12 @@ class ConfigurationWindow(QMainWindow):
     def setup_ui(self):
         """Setup the main UI"""
         central_widget = QWidget()
+        central_widget.setStyleSheet(f"background-color: {BACKGROUND_COLOR};")  # Ensure background is set
         self.setCentralWidget(central_widget)
         
         layout = QVBoxLayout(central_widget)
+        layout.setContentsMargins(20, 10, 20, 20)
+        layout.setSpacing(10)
         
         # Header
         self.create_header(layout)

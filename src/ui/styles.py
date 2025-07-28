@@ -25,8 +25,20 @@ def get_application_style():
         color: {TEXT_COLOR};
     }}
     
+    /* Central Widget - Ensure it has the same background */
+    QMainWindow > QWidget {{
+        background-color: {BACKGROUND_COLOR};
+        color: {TEXT_COLOR};
+    }}
+    
+    /* All Dialogs */
+    QDialog {{
+        background-color: {BACKGROUND_COLOR};
+        color: {TEXT_COLOR};
+    }}
+    
     QWidget {{
-        background-color: transparent;
+        background-color: {BACKGROUND_COLOR};
         color: {TEXT_COLOR};
     }}
     
@@ -407,7 +419,7 @@ def get_login_style():
     """Get specific styling for login window"""
     return f"""
     QDialog {{
-        background-color: {CARD_COLOR};
+        background-color: {BACKGROUND_COLOR};
         border-radius: 12px;
     }}
     

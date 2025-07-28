@@ -34,8 +34,8 @@ class LoginWindow(QDialog):
         self.setFixedSize(LOGIN_WINDOW_WIDTH, LOGIN_WINDOW_HEIGHT)
         self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint)
         
-        # Apply styling
-        self.setStyleSheet(get_login_style())
+        # Apply styling - use both application-wide and login-specific styles
+        self.setStyleSheet(get_application_style() + get_login_style())
         
         self.setup_ui()
         self.center_window()
