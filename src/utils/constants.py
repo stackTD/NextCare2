@@ -39,7 +39,7 @@ SUCCESS_COLOR = "#2ECC71"      # Green
 WARNING_COLOR = "#F39C12"      # Orange
 ERROR_COLOR = "#E74C3C"        # Red
 BACKGROUND_COLOR = "#FFFFFF"   # Light gray
-TEXT_COLOR = "#2C3E50"         # Dark gray
+TEXT_COLOR = "#000000"         # Dark gray
 CARD_COLOR = "#FFFFFF"         # White
 
 # Register Addresses (PLC Simulation)

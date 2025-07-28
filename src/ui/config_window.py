@@ -352,7 +352,7 @@ class ConfigurationWindow(QMainWindow):
             self.edit_machine_btn = QPushButton("Edit Machine")
             self.edit_machine_btn.clicked.connect(self.edit_machine)
             self.edit_machine_btn.setEnabled(False)
-            header_layout.addWidget(self.edit_machine_btn)
+            # header_layout.addWidget(self.edit_machine_btn)
             
             self.delete_machine_btn = QPushButton("Delete Machine")
             self.delete_machine_btn.clicked.connect(self.delete_machine)
@@ -416,12 +416,28 @@ class ConfigurationWindow(QMainWindow):
             self.add_parameter_btn = QPushButton("Add Parameter")
             self.add_parameter_btn.clicked.connect(self.add_parameter)
             self.add_parameter_btn.setEnabled(False)
+            self.add_parameter_btn.setStyleSheet("""
+QPushButton {
+background-color: #4CAF50;
+color: white;
+                                                            border: 1px solid #45a049;
+            padding: 8px 16px;
+            border-radius: 4px;
+                    }
+        QPushButton:hover {
+            background-color: #45a049;
+        }
+                QPushButton:disabled {
+            background-color: #cccccc;
+            color: #666666;
+        }
+    """)
             header_layout.addWidget(self.add_parameter_btn)
             
             self.edit_parameter_btn = QPushButton("Edit Parameter")
             self.edit_parameter_btn.clicked.connect(self.edit_parameter)
             self.edit_parameter_btn.setEnabled(False)
-            header_layout.addWidget(self.edit_parameter_btn)
+            # header_layout.addWidget(self.edit_parameter_btn)
             
             self.delete_parameter_btn = QPushButton("Delete Parameter")
             self.delete_parameter_btn.clicked.connect(self.delete_parameter)
@@ -543,7 +559,7 @@ class ConfigurationWindow(QMainWindow):
         selected = self.parameter_table.selectionModel().hasSelection()
         
         if auth_manager.can_manage_machines():
-            self.edit_parameter_btn.setEnabled(selected)
+            # self.edit_parameter_btn.setEnabled(selected)
             self.delete_parameter_btn.setEnabled(selected)
     
     def on_machine_combo_changed(self):
