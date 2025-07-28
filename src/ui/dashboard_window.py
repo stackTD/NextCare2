@@ -55,20 +55,22 @@ class MetricCard(QFrame):
                 background-color: {CARD_COLOR};
                 border: 1px solid #E1E8ED;
                 border-radius: 12px;
-                padding: 16px;
-                margin: 4px;
+                padding: 8px;  /* Reduced from 16px to 12px */
+                margin: 2px;    /* Reduced from 4px to 2px */
+                min-width: 100px;  /* Added minimum width */
+                max-width: 200px;  /* Added maximum width for better layout */
             }}
         """)
         
         layout = QVBoxLayout()
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(8)
+        layout.setContentsMargins(10, 10, 10, 10)  # Reduced from 16px to 12px
+        layout.setSpacing(5)  # Reduced from 8px to 6px
         
         # Parameter name
         self.name_label = QLabel(self.parameter_name)
         self.name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.name_label.setStyleSheet(f"""
-            font-size: 14px;
+            font-size: 10px;  /* Slightly reduced from 14px */
             font-weight: 600;
             color: {SECONDARY_COLOR};
         """)
@@ -78,7 +80,7 @@ class MetricCard(QFrame):
         self.value_label = QLabel("--")
         self.value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.value_label.setStyleSheet(f"""
-            font-size: 32px;
+            font-size: 25px;  /* Slightly reduced from 32px */
             font-weight: bold;
             color: {PRIMARY_COLOR};
         """)
@@ -88,7 +90,7 @@ class MetricCard(QFrame):
         self.unit_label = QLabel(self.unit)
         self.unit_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.unit_label.setStyleSheet(f"""
-            font-size: 12px;
+            font-size: 8px;  /* Slightly reduced from 12px */
             color: {TEXT_COLOR};
         """)
         layout.addWidget(self.unit_label)
@@ -97,10 +99,10 @@ class MetricCard(QFrame):
         self.status_label = QLabel("No Data")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status_label.setStyleSheet(f"""
-            font-size: 11px;
+            font-size: 10px;  /* Slightly reduced from 11px */
             font-weight: 600;
             color: {TEXT_COLOR};
-            padding: 4px 8px;
+            padding: 3px 6px;  /* Reduced padding */
             border-radius: 4px;
             background-color: #F1F3F4;
         """)
@@ -534,7 +536,7 @@ class DashboardWindow(QMainWindow):
             
             # Create metric cards
             row, col = 0, 0
-            max_cols = 4
+            max_cols = 6
             
             for param in parameters:
                 # Create metric card
