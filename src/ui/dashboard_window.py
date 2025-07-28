@@ -568,6 +568,10 @@ class DashboardWindow(QMainWindow):
         """Update the parameters table"""
         self.parameters_table.setRowCount(len(parameters))
         
+        # Set row height to accommodate buttons properly
+        for row in range(len(parameters)):
+            self.parameters_table.setRowHeight(row, 35)
+        
         for row, param in enumerate(parameters):
             # Parameter name
             self.parameters_table.setItem(row, 0, QTableWidgetItem(param['name']))
@@ -584,9 +588,20 @@ class DashboardWindow(QMainWindow):
             # Last update (will be updated with real data)
             self.parameters_table.setItem(row, 4, QTableWidgetItem("--"))
             
-            # Detail button
+            # Detail button with proper sizing
             detail_btn = QPushButton("Detail")
-            detail_btn.setStyleSheet(f"background-color: {PRIMARY_COLOR}; color: white; padding: 4px 8px; border-radius: 4px;")
+            detail_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {PRIMARY_COLOR}; 
+                    color: white; 
+                    padding: 2px 6px; 
+                    border-radius: 4px;
+                    font-size: 10px;
+                    min-height: 20px;
+                    max-height: 25px;
+                }}
+            """)
+            detail_btn.setMaximumSize(60, 25)
             detail_btn.clicked.connect(lambda checked, p=param: self.show_parameter_detail(p))
             self.parameters_table.setCellWidget(row, 5, detail_btn)
             
