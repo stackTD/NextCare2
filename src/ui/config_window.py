@@ -357,7 +357,22 @@ class ConfigurationWindow(QMainWindow):
             self.delete_machine_btn = QPushButton("Delete Machine")
             self.delete_machine_btn.clicked.connect(self.delete_machine)
             self.delete_machine_btn.setEnabled(False)
-            self.delete_machine_btn.setStyleSheet(f"background-color: {ERROR_COLOR};")
+            self.delete_machine_btn.setStyleSheet("""
+	QPushButton {
+		background-color: #E74C3C;
+		color: white;
+           	border: 1px solid #45a049;
+            	padding: 8px 16px;
+            	border-radius: 4px;
+                    }
+        QPushButton:hover {
+            background-color: #E74C3C;
+        }
+                QPushButton:disabled {
+            background-color: #cccccc;
+            color: #666666;
+        }
+    """)
             header_layout.addWidget(self.delete_machine_btn)
         
         layout.addLayout(header_layout)
@@ -442,7 +457,22 @@ color: white;
             self.delete_parameter_btn = QPushButton("Delete Parameter")
             self.delete_parameter_btn.clicked.connect(self.delete_parameter)
             self.delete_parameter_btn.setEnabled(False)
-            self.delete_parameter_btn.setStyleSheet(f"background-color: {ERROR_COLOR};")
+            self.delete_parameter_btn.setStyleSheet("""
+	QPushButton {
+		background-color: #E74C3C;
+		color: white;
+           	border: 1px solid #45a049;
+            	padding: 8px 16px;
+            	border-radius: 4px;
+                    }
+        QPushButton:hover {
+            background-color: #E74C3C;
+        }
+                QPushButton:disabled {
+            background-color: #cccccc;
+            color: #666666;
+        }
+    """)
             header_layout.addWidget(self.delete_parameter_btn)
         
         layout.addLayout(header_layout)

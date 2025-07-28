@@ -583,7 +583,8 @@ class DashboardWindow(QMainWindow):
             self.parameters_table.setItem(row, 4, QTableWidgetItem("--"))
             
             # Detail button
-            detail_btn = QPushButton("View Detail")
+            detail_btn = QPushButton("Detail")
+            detail_btn.setStyleSheet(f"background-color: {PRIMARY_COLOR}; color: white; padding: 4px 8px; border-radius: 4px;")
             detail_btn.clicked.connect(lambda checked, p=param: self.show_parameter_detail(p))
             self.parameters_table.setCellWidget(row, 5, detail_btn)
             
