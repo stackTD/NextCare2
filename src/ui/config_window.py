@@ -426,8 +426,9 @@ class ConfigurationWindow(QMainWindow):
         
         header_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         
-        # Parameter management buttons (only for admins/managers)
-        if auth_manager.can_manage_machines():
+        # Parameter management buttons (role-based access)
+        # Show parameter buttons for admins and managers
+        if auth_manager.has_manager_access():
             self.add_parameter_btn = QPushButton("Add Parameter")
             self.add_parameter_btn.clicked.connect(self.add_parameter)
             self.add_parameter_btn.setEnabled(False)
@@ -608,6 +609,11 @@ color: white;
     
     def add_machine(self):
         """Add new machine"""
+        # Check permissions - only admins can add machines
+        if not auth_manager.can_manage_machines():
+            QMessageBox.warning(self, "Access Denied", "You don't have permission to add machines.")
+            return
+        
         dialog = MachineDialog(parent=self)
         
         if dialog.exec() == QDialog.DialogCode.Accepted:
@@ -637,6 +643,11 @@ color: white;
             return
         
         machine_id = self.machine_table.item(current_row, 0).data(Qt.ItemDataRole.UserRole)
+        
+        # Check permissions - only admins can edit machines
+        if not auth_manager.can_manage_machines():
+            QMessageBox.warning(self, "Access Denied", "You don't have permission to edit machines.")
+            return
         
         # Get current machine data
         machine_data = {
@@ -672,6 +683,11 @@ color: white;
         if current_row < 0:
             return
         
+        # Check permissions - only admins can delete machines
+        if not auth_manager.can_manage_machines():
+            QMessageBox.warning(self, "Access Denied", "You don't have permission to delete machines.")
+            return
+        
         machine_name = self.machine_table.item(current_row, 0).text()
         machine_id = self.machine_table.item(current_row, 0).data(Qt.ItemDataRole.UserRole)
         
@@ -701,6 +717,11 @@ color: white;
             QMessageBox.warning(self, "Error", "Please select a machine first!")
             return
         
+        # Check permissions - admin and managers can add parameters to their assigned machines
+        if not auth_manager.can_edit_machine_parameters(self.current_machine_id):
+            QMessageBox.warning(self, "Access Denied", "You don't have permission to add parameters to this machine.")
+            return
+        
         dialog = ParameterDialog(parent=self)
         
         if dialog.exec() == QDialog.DialogCode.Accepted:
@@ -725,6 +746,11 @@ color: white;
         """Edit selected parameter"""
         current_row = self.parameter_table.currentRow()
         if current_row < 0:
+            return
+        
+        # Check permissions - admin and managers can edit parameters for their assigned machines
+        if not auth_manager.can_edit_machine_parameters(self.current_machine_id):
+            QMessageBox.warning(self, "Access Denied", "You don't have permission to edit parameters for this machine.")
             return
         
         parameter_id = self.parameter_table.item(current_row, 0).data(Qt.ItemDataRole.UserRole)
@@ -765,6 +791,11 @@ color: white;
         """Delete selected parameter"""
         current_row = self.parameter_table.currentRow()
         if current_row < 0:
+            return
+        
+        # Check permissions - admin and managers can delete parameters for their assigned machines
+        if not auth_manager.can_edit_machine_parameters(self.current_machine_id):
+            QMessageBox.warning(self, "Access Denied", "You don't have permission to delete parameters for this machine.")
             return
         
         parameter_name = self.parameter_table.item(current_row, 0).text()

@@ -57,16 +57,44 @@ class DatabaseOperations:
         
         return self.db.execute_command(command, (username, password_hash, role, full_name, email))
     
-    def get_users(self) -> List[Dict[str, Any]]:
-        """Get all active users"""
-        query = """
-        SELECT id, username, role, full_name, email, created_at, is_active
-        FROM users 
-        WHERE is_active = TRUE
-        ORDER BY full_name
+    def get_users(self, role: str = None) -> List[Dict[str, Any]]:
+        """Get active users, optionally filtered by role"""
+        if role:
+            query = """
+            SELECT id, username, role, full_name, email, created_at, is_active
+            FROM users 
+            WHERE is_active = TRUE AND role = %s
+            ORDER BY full_name
+            """
+            return self.db.execute_query(query, (role,)) or []
+        else:
+            query = """
+            SELECT id, username, role, full_name, email, created_at, is_active
+            FROM users 
+            WHERE is_active = TRUE
+            ORDER BY full_name
+            """
+            return self.db.execute_query(query) or []
+    
+    def update_user(self, user_id: int, username: str, role: str, full_name: str, email: str = None) -> bool:
+        """Update user information"""
+        command = """
+        UPDATE users 
+        SET username = %s, role = %s, full_name = %s, email = %s
+        WHERE id = %s
         """
-        
-        return self.db.execute_query(query) or []
+        return self.db.execute_command(command, (username, role, full_name, email, user_id))
+    
+    def delete_user(self, user_id: int) -> bool:
+        """Soft delete a user"""
+        command = "UPDATE users SET is_active = FALSE WHERE id = %s"
+        return self.db.execute_command(command, (user_id,))
+    
+    def change_user_password(self, user_id: int, new_password: str) -> bool:
+        """Change user password"""
+        password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        command = "UPDATE users SET password_hash = %s WHERE id = %s"
+        return self.db.execute_command(command, (password_hash, user_id))
     
     # Machine Management
     def get_machines(self, user_id: int = None, role: str = None) -> List[Dict[str, Any]]:
@@ -234,6 +262,64 @@ class DatabaseOperations:
         """
         
         return self.db.execute_query(query, (user_id,)) or []
+    
+    def get_machine_users(self, machine_id: int) -> List[Dict[str, Any]]:
+        """Get users with access to a specific machine"""
+        query = """
+        SELECT u.id, u.username, u.role, u.full_name, u.email, uma.granted_at
+        FROM users u
+        INNER JOIN user_machine_access uma ON u.id = uma.user_id
+        WHERE uma.machine_id = %s AND u.is_active = TRUE
+        ORDER BY u.full_name
+        """
+        
+        return self.db.execute_query(query, (machine_id,)) or []
+    
+    def get_user_machine_assignments(self, user_id: int = None, role: str = None) -> List[Dict[str, Any]]:
+        """Get user-machine assignments with optional filtering"""
+        base_query = """
+        SELECT u.id as user_id, u.username, u.role, u.full_name, 
+               m.id as machine_id, m.name as machine_name, uma.granted_at
+        FROM users u
+        INNER JOIN user_machine_access uma ON u.id = uma.user_id
+        INNER JOIN machines m ON uma.machine_id = m.id
+        WHERE u.is_active = TRUE AND m.is_active = TRUE
+        """
+        
+        params = []
+        conditions = []
+        
+        if user_id:
+            conditions.append("u.id = %s")
+            params.append(user_id)
+        
+        if role:
+            conditions.append("u.role = %s")
+            params.append(role)
+        
+        if conditions:
+            query = base_query + " AND " + " AND ".join(conditions)
+        else:
+            query = base_query
+            
+        query += " ORDER BY u.full_name, m.name"
+        
+        return self.db.execute_query(query, params) or []
+    
+    def set_user_machine_access(self, user_id: int, machine_ids: List[int]) -> bool:
+        """Set complete machine access for a user (removes existing, adds new)"""
+        try:
+            # Remove all existing access
+            self.db.execute_command("DELETE FROM user_machine_access WHERE user_id = %s", (user_id,))
+            
+            # Add new access
+            for machine_id in machine_ids:
+                self.grant_machine_access(user_id, machine_id)
+            
+            return True
+        except Exception as e:
+            logger.error(f"Error setting user machine access: {e}")
+            return False
 
 # Global database operations instance
 db_ops = DatabaseOperations()
