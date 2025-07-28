@@ -162,7 +162,7 @@ class LoginWindow(QDialog):
         button_layout.setSpacing(12)
         
         # Cancel button
-        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button = QPushButton("Exit")
         self.cancel_button.setStyleSheet(f"""
             QPushButton {{
                 background-color: transparent;
@@ -225,12 +225,12 @@ class LoginWindow(QDialog):
         
         # Validate input
         if not username:
-            self.show_error("Please enter your username")
+            self.show_error("Wrong password/username. Please try again.")
             self.username_input.setFocus()
             return
         
         if not password:
-            self.show_error("Please enter your password")
+            self.show_error("Wrong password/username. Please try again.")
             self.password_input.setFocus()
             return
         
@@ -241,25 +241,38 @@ class LoginWindow(QDialog):
         self.login_button.setEnabled(False)
         self.login_button.setText("Signing In...")
         
+        # Process events to update UI
+        QApplication.processEvents()
+        
         # Attempt authentication
         try:
             if auth_manager.login(username, password):
                 user = auth_manager.get_current_user()
-                self.show_success(f"Welcome, {user['full_name']}!")
-                
-                # Emit successful login signal
-                self.login_successful.emit(user)
-                
-                # Close dialog after brief delay
-                self.accept()
+                if user:
+                    self.show_success(f"Welcome, {user['full_name']}!")
+                    
+                    # Emit successful login signal
+                    self.login_successful.emit(user)
+                    
+                    # Close dialog after brief delay
+                    QApplication.processEvents()
+                    self.accept()
+                else:
+                    self.show_error("Authentication error. Please try again.")
+                    self.password_input.clear()
+                    self.username_input.setFocus()
             else:
-                self.show_error("Invalid username or password")
+                # Authentication failed - show error and stay open
+                self.show_error("Wrong password/username. Please try again.")
                 self.password_input.clear()
+                self.password_input.selectAll()  # Clear and select password field
                 self.password_input.setFocus()
                 
         except Exception as e:
             logger.error(f"Login error: {e}")
             self.show_error("Login failed. Please check your connection and try again.")
+            self.password_input.clear()
+            self.username_input.setFocus()
         
         finally:
             # Re-enable login button
@@ -278,10 +291,30 @@ class LoginWindow(QDialog):
         self.status_label.setStyleSheet(f"color: {SUCCESS_COLOR}; font-size: 12px; font-weight: 600;")
         self.status_label.show()
     
+    def reject(self):
+        """Handle dialog rejection/cancellation"""
+        logger.info("Login dialog cancelled by user")
+        super().reject()
+    
+    def accept(self):
+        """Handle dialog acceptance"""
+        logger.info("Login dialog accepted - successful authentication")
+        super().accept()
+    
+    def closeEvent(self, event):
+        """Handle window close event"""
+        logger.info("Login window close event")
+        # Allow the close event to proceed
+        event.accept()
+    
     def keyPressEvent(self, event):
         """Handle key press events"""
         if event.key() == Qt.Key.Key_Escape:
             self.reject()
+        elif event.key() == Qt.Key.Key_Return or event.key() == Qt.Key.Key_Enter:
+            # Only attempt login if not already processing
+            if self.login_button.isEnabled():
+                self.attempt_login()
         else:
             super().keyPressEvent(event)
 
@@ -296,10 +329,20 @@ def show_login_dialog(parent=None):
     
     dialog = LoginWindow()
     
-    if dialog.exec() == QDialog.DialogCode.Accepted:
-        return auth_manager.get_current_user()
+    # Show dialog and wait for result
+    result = dialog.exec()
     
-    return None
+    if result == QDialog.DialogCode.Accepted:
+        user = auth_manager.get_current_user()
+        if user:
+            logger.info(f"Login successful for user: {user['username']}")
+            return user
+        else:
+            logger.warning("Dialog accepted but no user found")
+            return None
+    else:
+        logger.info("Login dialog was cancelled or rejected")
+        return None
 
 if __name__ == "__main__":
     # Test the login window
