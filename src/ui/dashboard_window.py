@@ -304,6 +304,8 @@ class DashboardWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         
         layout = QVBoxLayout(central_widget)
+        layout.setContentsMargins(20, 10, 20, 20)  # Reduced top margin from default to 10
+        layout.setSpacing(10)
         
         # Header
         self.create_header(layout)
@@ -453,7 +455,7 @@ class DashboardWindow(QMainWindow):
         button_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         
         # Logout button
-        self.logout_button = QPushButton("Logout")
+        self.logout_button = QPushButton("Exit")
         self.logout_button.setStyleSheet(f"background-color: {ERROR_COLOR};")
         self.logout_button.clicked.connect(self.logout)
         button_layout.addWidget(self.logout_button)
