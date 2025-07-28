@@ -91,7 +91,7 @@ CREATE_INDEXES = [
 # Initial data for testing
 INSERT_DEFAULT_USERS = """
 INSERT INTO users (username, password_hash, role, full_name, email) VALUES
-    ('admin', '$2b$12$8y1N.Vo1kFvJJZxS3vXkN.vxHo.UiS9f7yPdQBBwxV9YZS0L4mJti', 'admin', 'System Administrator', 'admin@nextcare.com'),
+    ('admin', '$2b$12$LzjXF7M9wuYcRST8.mTPi.NhH8.bP7/FhhgQdJ2FjsiAAQW7HcpJ2', 'admin', 'System Administrator', 'admin@nextcare.com'),
     ('manager1', '$2b$12$8y1N.Vo1kFvJJZxS3vXkN.vxHo.UiS9f7yPdQBBwxV9YZS0L4mJti', 'manager', 'Plant Manager', 'manager@nextcare.com'),
     ('engineer1', '$2b$12$8y1N.Vo1kFvJJZxS3vXkN.vxHo.UiS9f7yPdQBBwxV9YZS0L4mJti', 'engineer', 'Maintenance Engineer', 'engineer@nextcare.com')
 ON CONFLICT (username) DO NOTHING;

@@ -4,10 +4,13 @@ Authentication and authorization utilities
 
 from typing import Optional, Dict, Any
 import logging
+
+# Use try/except to handle both relative and absolute imports
 try:
     from ..database.operations import db_ops
     from .constants import ROLES
 except ImportError:
+    # Fallback to absolute imports when running directly
     from database.operations import db_ops
     from utils.constants import ROLES
 

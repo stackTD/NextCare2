@@ -2,7 +2,12 @@
 Professional UI styling for NextCare2 application
 """
 
-from ..utils.constants import *
+# Use try/except to handle both relative and absolute imports
+try:
+    from ..utils.constants import *
+except ImportError:
+    # Fallback to absolute imports when running directly
+    from utils.constants import *
 
 def get_application_style():
     """Get the main application stylesheet"""

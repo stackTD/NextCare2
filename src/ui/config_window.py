@@ -10,10 +10,19 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                             QDialog, QDialogButtonBox, QSpacerItem, QSizePolicy)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
-from ..database.operations import db_ops
-from ..utils.auth import auth_manager
-from ..utils.constants import *
-from .styles import get_application_style
+
+# Use try/except to handle both relative and absolute imports
+try:
+    from ..database.operations import db_ops
+    from ..utils.auth import auth_manager
+    from ..utils.constants import *
+    from .styles import get_application_style
+except ImportError:
+    # Fallback to absolute imports when running directly
+    from database.operations import db_ops
+    from utils.auth import auth_manager
+    from utils.constants import *
+    from ui.styles import get_application_style
 
 logger = logging.getLogger(__name__)
 

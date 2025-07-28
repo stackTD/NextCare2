@@ -10,7 +10,8 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QPixmap, QPainter, QFont, QColor
 
 # Add src directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+src_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, src_dir)
 
 from database.connection import db_manager
 from ui.login_window import LoginWindow

@@ -28,8 +28,8 @@ DATA_POLLING_INTERVAL = 1000  # milliseconds
 # UI Configuration
 WINDOW_MIN_WIDTH = 1200
 WINDOW_MIN_HEIGHT = 800
-LOGIN_WINDOW_WIDTH = 400
-LOGIN_WINDOW_HEIGHT = 300
+LOGIN_WINDOW_WIDTH = 450
+LOGIN_WINDOW_HEIGHT = 500
 
 # Colors (Professional Industrial Theme)
 PRIMARY_COLOR = "#2E3B4E"      # Dark blue-gray
@@ -38,7 +38,7 @@ ACCENT_COLOR = "#98C1D9"       # Light blue
 SUCCESS_COLOR = "#2ECC71"      # Green
 WARNING_COLOR = "#F39C12"      # Orange
 ERROR_COLOR = "#E74C3C"        # Red
-BACKGROUND_COLOR = "#F8F9FA"   # Light gray
+BACKGROUND_COLOR = "#FFFFFF"   # Light gray
 TEXT_COLOR = "#2C3E50"         # Dark gray
 CARD_COLOR = "#FFFFFF"         # White
 

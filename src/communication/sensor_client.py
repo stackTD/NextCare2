@@ -9,6 +9,8 @@ import time
 import logging
 from typing import Dict, Any, Optional, Callable
 from PyQt6.QtCore import QObject, QTimer, pyqtSignal
+
+# Use try/except to handle both relative and absolute imports
 try:
     from ..utils.constants import SENSOR_HOST, SENSOR_PORT, DATA_POLLING_INTERVAL
 except ImportError:
@@ -164,8 +166,13 @@ class SensorClient(QObject):
             return
         
         # Get all register addresses that are being monitored
-        from ..database.operations import db_ops
-        from ..utils.constants import REGISTER_MAP
+        try:
+            from ..database.operations import db_ops
+            from ..utils.constants import REGISTER_MAP
+        except ImportError:
+            # Fallback to absolute imports when running directly
+            from database.operations import db_ops
+            from utils.constants import REGISTER_MAP
         
         # For now, poll all known registers
         registers = list(REGISTER_MAP.keys())

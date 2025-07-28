@@ -15,11 +15,21 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import numpy as np
-from ..database.operations import db_ops
-from ..communication.sensor_client import sensor_client
-from ..utils.auth import auth_manager
-from ..utils.constants import *
-from .styles import get_application_style, get_dashboard_style
+
+# Use try/except to handle both relative and absolute imports
+try:
+    from ..database.operations import db_ops
+    from ..communication.sensor_client import sensor_client
+    from ..utils.auth import auth_manager
+    from ..utils.constants import *
+    from .styles import get_application_style, get_dashboard_style
+except ImportError:
+    # Fallback to absolute imports when running directly
+    from database.operations import db_ops
+    from communication.sensor_client import sensor_client
+    from utils.auth import auth_manager
+    from utils.constants import *
+    from ui.styles import get_application_style, get_dashboard_style
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +43,7 @@ class MetricCard(QFrame):
         self.current_value = 0.0
         self.alarm_low = 0.0
         self.alarm_high = 100.0
+        # self.setStyleSheet(f"QMainWindow {{ background-color: {BACKGROUND_COLOR}; }}")
         
         self.setup_ui()
         

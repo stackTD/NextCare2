@@ -9,9 +9,17 @@ from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                             QApplication, QMessageBox, QSpacerItem, QSizePolicy)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QPixmap, QPalette
-from ..utils.auth import auth_manager
-from ..utils.constants import *
-from .styles import get_login_style, get_application_style
+
+# Use try/except to handle both relative and absolute imports
+try:
+    from ..utils.auth import auth_manager
+    from ..utils.constants import *
+    from .styles import get_login_style, get_application_style
+except ImportError:
+    # Fallback to absolute imports when running directly
+    from utils.auth import auth_manager
+    from utils.constants import *
+    from ui.styles import get_login_style, get_application_style
 
 logger = logging.getLogger(__name__)
 
