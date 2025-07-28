@@ -380,9 +380,9 @@ class DashboardWindow(QMainWindow):
     def create_main_content(self, layout):
         """Create main content area"""
         # Splitter for metrics and detail view
-        splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter = QSplitter(Qt.Orientation.Vertical)
         
-        # Left side - Metrics cards
+        # Top section - Metrics cards
         metrics_widget = QWidget()
         metrics_layout = QVBoxLayout(metrics_widget)
         
@@ -407,7 +407,7 @@ class DashboardWindow(QMainWindow):
         
         metrics_layout.addWidget(scroll_area)
         
-        # Right side - Parameter details table
+        # Bottom section - Parameter details table
         details_widget = QWidget()
         details_layout = QVBoxLayout(details_widget)
         
@@ -442,7 +442,7 @@ class DashboardWindow(QMainWindow):
         # Add to splitter
         splitter.addWidget(metrics_widget)
         splitter.addWidget(details_widget)
-        splitter.setSizes([400, 600])  # Set initial sizes
+        splitter.setSizes([300, 400])  # Set initial sizes for vertical layout
         
         layout.addWidget(splitter)
     
