@@ -164,7 +164,44 @@ class MachineAssignmentDialog(QDialog):
     
     def setup_ui(self):
         """Setup the dialog UI"""
-        self.setStyleSheet(f"QDialog {{ background-color: {BACKGROUND_COLOR}; }}")
+        self.setStyleSheet(f"""
+            QDialog {{ 
+                background-color: {BACKGROUND_COLOR}; 
+                color: {TEXT_COLOR};
+            }}
+            QCheckBox {{
+                color: {TEXT_COLOR};
+                font-size: 12px;
+                padding: 5px;
+            }}
+            QCheckBox::indicator {{
+                width: 16px;
+                height: 16px;
+            }}
+            QCheckBox::indicator:unchecked {{
+                border: 2px solid {SECONDARY_COLOR};
+                background-color: white;
+            }}
+            QCheckBox::indicator:checked {{
+                border: 2px solid {SECONDARY_COLOR};
+                background-color: {ACCENT_COLOR};
+            }}
+            QPushButton {{
+                background-color: {PRIMARY_COLOR};
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background-color: {SECONDARY_COLOR};
+            }}
+            QScrollArea {{
+                border: 1px solid {SECONDARY_COLOR};
+                border-radius: 4px;
+            }}
+        """)
         
         layout = QVBoxLayout()
         
@@ -175,16 +212,23 @@ class MachineAssignmentDialog(QDialog):
             font-weight: bold;
             color: {PRIMARY_COLOR};
             padding: 10px;
+            background-color: {CARD_COLOR};
+            border-radius: 4px;
+            margin-bottom: 10px;
         """)
         layout.addWidget(header_label)
         
         # Scroll area for machines
         scroll_area = QScrollArea()
         scroll_widget = QWidget()
+        scroll_widget.setStyleSheet(f"background-color: {CARD_COLOR};")
         self.machines_layout = QVBoxLayout(scroll_widget)
+        self.machines_layout.setSpacing(5)
+        self.machines_layout.setContentsMargins(10, 10, 10, 10)
         
         scroll_area.setWidget(scroll_widget)
         scroll_area.setWidgetResizable(True)
+        scroll_area.setMinimumHeight(300)
         layout.addWidget(scroll_area)
         
         # Buttons
@@ -213,35 +257,81 @@ class MachineAssignmentDialog(QDialog):
     
     def load_machines(self):
         """Load available machines"""
-        # Get machines based on current user's permissions
-        current_role = auth_manager.get_user_role()
-        current_user = auth_manager.get_current_user()
-        
-        if current_role == 'admin':
-            # Admin can assign all machines
-            machines = db_ops.get_machines()
-        elif current_role == 'manager':
-            # Manager can assign from all machines (or could be limited to their assigned machines)
-            machines = db_ops.get_machines()
-        else:
-            machines = []
-        
-        # Get currently assigned machines
-        assigned_machines = db_ops.get_user_machines(self.user_data['id'])
-        assigned_machine_ids = [m['id'] for m in assigned_machines]
-        
-        # Create checkboxes for each machine
-        for machine in machines:
-            checkbox = QCheckBox(f"{machine['name']} - {machine['location']}")
-            checkbox.setChecked(machine['id'] in assigned_machine_ids)
+        try:
+            # Get machines based on current user's permissions
+            current_role = auth_manager.get_user_role()
+            current_user = auth_manager.get_current_user()
             
-            # Store machine info
-            self.machine_checkboxes[machine['id']] = {
-                'checkbox': checkbox,
-                'machine': machine
-            }
+            logger.info(f"Loading machines for user role: {current_role}")
+            logger.info(f"Current user: {current_user}")
             
-            self.machines_layout.addWidget(checkbox)
+            if current_role == 'admin':
+                # Admin can assign all machines - use same call as config window
+                machines = db_ops.get_machines(current_user['id'], current_user['role'])
+                logger.info(f"Admin user - fetching all machines")
+            elif current_role == 'manager':
+                # Manager can assign from all machines - use same call as config window
+                machines = db_ops.get_machines(current_user['id'], current_user['role'])
+                logger.info(f"Manager user - fetching all machines")
+            else:
+                machines = []
+                logger.info(f"Other role ({current_role}) - no machines allowed")
+            
+            logger.info(f"Found {len(machines)} machines from database")
+            
+            # Remove the duplicate debug call since we're now using the correct method
+            
+            # Get currently assigned machines
+            assigned_machines = db_ops.get_user_machines(self.user_data['id'])
+            assigned_machine_ids = [m['id'] for m in assigned_machines]
+            
+            logger.info(f"User {self.user_data['id']} has {len(assigned_machine_ids)} assigned machines")
+            
+            # Clear existing checkboxes
+            for i in reversed(range(self.machines_layout.count())):
+                child = self.machines_layout.itemAt(i).widget()
+                if child:
+                    child.setParent(None)
+            
+            # Create checkboxes for each machine
+            for machine in machines:
+                checkbox = QCheckBox(f"{machine['name']} - {machine['location']}")
+                checkbox.setChecked(machine['id'] in assigned_machine_ids)
+                checkbox.setStyleSheet(f"""
+                    QCheckBox {{
+                        color: black;
+                        font-size: 12px;
+                        padding: 8px;
+                        background-color: white;
+                    }}
+                """)
+                
+                # Store machine info
+                self.machine_checkboxes[machine['id']] = {
+                    'checkbox': checkbox,
+                    'machine': machine
+                }
+                
+                self.machines_layout.addWidget(checkbox)
+                logger.info(f"Added checkbox for machine: {machine['name']}")
+            
+            # Add some debug info to see if machines are loading
+            if not machines:
+                no_machines_label = QLabel("No machines available to assign.")
+                no_machines_label.setStyleSheet("color: red; font-style: italic; padding: 20px; font-size: 14px;")
+                self.machines_layout.addWidget(no_machines_label)
+                logger.warning("No machines found to display")
+                
+                # Add debug info
+                debug_label = QLabel(f"Debug: Current role is '{current_role}', User: {current_user}")
+                debug_label.setStyleSheet("color: blue; padding: 10px; font-size: 12px;")
+                self.machines_layout.addWidget(debug_label)
+            
+        except Exception as e:
+            logger.error(f"Error loading machines: {e}")
+            error_label = QLabel(f"Error loading machines: {str(e)}")
+            error_label.setStyleSheet("color: red; padding: 20px; font-size: 14px;")
+            self.machines_layout.addWidget(error_label)
     
     def select_all_machines(self):
         """Select all machines"""

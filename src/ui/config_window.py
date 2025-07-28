@@ -347,6 +347,22 @@ class ConfigurationWindow(QMainWindow):
         if auth_manager.can_manage_machines():
             self.add_machine_btn = QPushButton("Add Machine")
             self.add_machine_btn.clicked.connect(self.add_machine)
+            self.add_machine_btn.setStyleSheet("""
+	QPushButton {
+		background-color: #98C1D9;
+		color: white;
+           	border: 1px solid #45a049;
+            	padding: 8px 16px;
+            	border-radius: 4px;
+                    }
+        QPushButton:hover {
+            background-color: #E74C3C;
+        }
+                QPushButton:disabled {
+            background-color: #cccccc;
+            color: #666666;
+        }
+    """)
             header_layout.addWidget(self.add_machine_btn)
             
             self.edit_machine_btn = QPushButton("Edit Machine")
