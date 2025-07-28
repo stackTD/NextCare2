@@ -4,8 +4,12 @@ Authentication and authorization utilities
 
 from typing import Optional, Dict, Any
 import logging
-from ..database.operations import db_ops
-from .constants import ROLES
+try:
+    from ..database.operations import db_ops
+    from .constants import ROLES
+except ImportError:
+    from database.operations import db_ops
+    from utils.constants import ROLES
 
 logger = logging.getLogger(__name__)
 

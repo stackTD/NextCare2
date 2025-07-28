@@ -7,7 +7,10 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from typing import Optional, Dict, Any
 import logging
-from ..utils.constants import DEFAULT_DB_HOST, DEFAULT_DB_PORT, DEFAULT_DB_NAME, DEFAULT_DB_USER
+try:
+    from ..utils.constants import DEFAULT_DB_HOST, DEFAULT_DB_PORT, DEFAULT_DB_NAME, DEFAULT_DB_USER
+except ImportError:
+    from utils.constants import DEFAULT_DB_HOST, DEFAULT_DB_PORT, DEFAULT_DB_NAME, DEFAULT_DB_USER
 
 logger = logging.getLogger(__name__)
 

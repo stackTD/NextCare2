@@ -6,7 +6,10 @@ import bcrypt
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 import logging
-from .connection import db_manager
+try:
+    from .connection import db_manager
+except ImportError:
+    from database.connection import db_manager
 
 logger = logging.getLogger(__name__)
 

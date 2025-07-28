@@ -9,7 +9,10 @@ import time
 import logging
 from typing import Dict, Any, Optional, Callable
 from PyQt6.QtCore import QObject, QTimer, pyqtSignal
-from ..utils.constants import SENSOR_HOST, SENSOR_PORT, DATA_POLLING_INTERVAL
+try:
+    from ..utils.constants import SENSOR_HOST, SENSOR_PORT, DATA_POLLING_INTERVAL
+except ImportError:
+    from utils.constants import SENSOR_HOST, SENSOR_PORT, DATA_POLLING_INTERVAL
 
 logger = logging.getLogger(__name__)
 

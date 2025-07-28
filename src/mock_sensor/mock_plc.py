@@ -10,7 +10,10 @@ import random
 import math
 import logging
 from typing import Dict, Any
-from ..utils.constants import SENSOR_HOST, SENSOR_PORT, REGISTER_MAP
+try:
+    from ..utils.constants import SENSOR_HOST, SENSOR_PORT, REGISTER_MAP
+except ImportError:
+    from utils.constants import SENSOR_HOST, SENSOR_PORT, REGISTER_MAP
 
 logger = logging.getLogger(__name__)
 
