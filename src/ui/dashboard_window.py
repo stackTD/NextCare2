@@ -534,7 +534,7 @@ class DashboardWindow(QMainWindow):
             
             # Create metric cards
             row, col = 0, 0
-            max_cols = 3
+            max_cols = 4
             
             for param in parameters:
                 # Create metric card
