@@ -23,6 +23,7 @@ try:
     from ..utils.auth import auth_manager
     from ..utils.constants import *
     from .styles import get_application_style, get_dashboard_style
+    from .settings_window import SettingsWindow
 except ImportError:
     # Fallback to absolute imports when running directly
     from database.operations import db_ops
@@ -30,6 +31,7 @@ except ImportError:
     from utils.auth import auth_manager
     from utils.constants import *
     from ui.styles import get_application_style, get_dashboard_style
+    from ui.settings_window import SettingsWindow
 
 logger = logging.getLogger(__name__)
 
@@ -346,6 +348,25 @@ class DashboardWindow(QMainWindow):
         
         # Spacer
         header_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
+        
+        # Settings button (only for admins/managers)
+        if auth_manager.can_access_settings():
+            self.settings_button = QPushButton("Settings")
+            self.settings_button.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {SECONDARY_COLOR};
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    font-weight: 600;
+                }}
+                QPushButton:hover {{
+                    background-color: {PRIMARY_COLOR};
+                }}
+            """)
+            self.settings_button.clicked.connect(self.open_settings)
+            header_layout.addWidget(self.settings_button)
         
         # User info
         user = auth_manager.get_current_user()
@@ -766,6 +787,15 @@ class DashboardWindow(QMainWindow):
         config_window = ConfigurationWindow()
         config_window.skip_to_dashboard.connect(config_window.close)
         config_window.show()
+    
+    def open_settings(self):
+        """Open settings window"""
+        try:
+            settings_window = SettingsWindow(parent=self)
+            settings_window.show()
+        except Exception as e:
+            logger.error(f"Error opening settings window: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to open settings: {str(e)}")
     
     def logout(self):
         """Logout and close window"""
