@@ -27,7 +27,8 @@ MANIFEST
 
 # PyInstaller
 *.manifest
-*.spec
+# Note: Keep nextcare.spec as it's our configuration file
+# *.spec
 
 # Installer logs
 pip-log.txt
