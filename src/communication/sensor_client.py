@@ -40,6 +40,14 @@ class SensorClient(QObject):
     def connect_to_sensor(self) -> bool:
         """Establish connection to sensor/PLC"""
         try:
+            # Close existing socket if any
+            if self.socket:
+                try:
+                    self.socket.close()
+                except:
+                    pass
+                self.socket = None
+            
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.settimeout(5.0)  # 5 second timeout
             self.socket.connect((self.host, self.port))
@@ -49,6 +57,18 @@ class SensorClient(QObject):
             logger.info(f"Connected to sensor at {self.host}:{self.port}")
             return True
             
+        except socket.timeout:
+            logger.error(f"Connection timeout to sensor at {self.host}:{self.port}")
+            self.connected = False
+            self.connection_status_changed.emit(False)
+            self.error_occurred.emit("Connection timeout")
+            return False
+        except ConnectionRefusedError:
+            logger.error(f"Connection refused by sensor at {self.host}:{self.port}")
+            self.connected = False
+            self.connection_status_changed.emit(False)
+            self.error_occurred.emit("Connection refused - check if sensor simulator is running")
+            return False
         except Exception as e:
             logger.error(f"Failed to connect to sensor: {e}")
             self.connected = False
@@ -62,6 +82,7 @@ class SensorClient(QObject):
         
         if self.socket:
             try:
+                self.socket.shutdown(socket.SHUT_RDWR)
                 self.socket.close()
             except:
                 pass

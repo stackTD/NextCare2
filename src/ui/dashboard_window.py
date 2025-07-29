@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                             QLabel, QPushButton, QComboBox, QTableWidget, 
                             QTableWidgetItem, QFrame, QGridLayout, QSplitter,
                             QDialog, QSpacerItem, QSizePolicy, QHeaderView,
-                            QMessageBox, QTextEdit, QGroupBox, QScrollArea)
+                            QMessageBox, QTextEdit, QGroupBox, QScrollArea, QApplication)
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, pyqtSlot
 from PyQt6.QtGui import QFont, QPalette, QColor
 import matplotlib.pyplot as plt
@@ -341,10 +341,38 @@ class DashboardWindow(QMainWindow):
         """)
         header_layout.addWidget(title_label)
         
-        # Connection status
+        # Connection status with refresh button
+        connection_layout = QHBoxLayout()
+        connection_layout.setSpacing(8)
+        
         self.connection_status = QLabel("● Disconnected")
         self.connection_status.setStyleSheet(f"color: {ERROR_COLOR}; font-weight: 600;")
-        header_layout.addWidget(self.connection_status)
+        connection_layout.addWidget(self.connection_status)
+        
+        # Connection refresh button
+        self.connection_refresh_btn = QPushButton("Retry")
+        self.connection_refresh_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {WARNING_COLOR};
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                font-weight: 600;
+                font-size: 12px;
+            }}
+            QPushButton:hover {{
+                background-color: {PRIMARY_COLOR};
+            }}
+            QPushButton:disabled {{
+                background-color: #CCCCCC;
+                color: #666666;
+            }}
+        """)
+        self.connection_refresh_btn.clicked.connect(self.retry_sensor_connection)
+        connection_layout.addWidget(self.connection_refresh_btn)
+        
+        header_layout.addLayout(connection_layout)
         
         # Spacer
         header_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
@@ -376,6 +404,104 @@ class DashboardWindow(QMainWindow):
             header_layout.addWidget(user_label)
         
         layout.addLayout(header_layout)
+    
+    def retry_sensor_connection(self):
+        """Retry sensor connection"""
+        # Disable button during connection attempt
+        self.connection_refresh_btn.setEnabled(False)
+        self.connection_refresh_btn.setText("Connecting...")
+        
+        # Update status to show attempting connection
+        self.connection_status.setText("● Connecting...")
+        self.connection_status.setStyleSheet(f"color: {WARNING_COLOR}; font-weight: 600;")
+        
+        # Process events to update UI immediately
+        QApplication.processEvents()
+        
+        try:
+            # Stop current polling if active
+            sensor_client.stop_polling()
+            
+            # Disconnect if currently connected
+            if sensor_client.is_connected():
+                sensor_client.disconnect_from_sensor()
+            
+            # Small delay to ensure clean disconnect
+            QTimer.singleShot(500, self._attempt_connection)
+            
+        except Exception as e:
+            logger.error(f"Error during connection retry: {e}")
+            self._connection_retry_failed(f"Connection error: {str(e)}")
+
+    def _attempt_connection(self):
+        """Attempt to establish connection (called after disconnect delay)"""
+        try:
+            # Try to connect
+            if sensor_client.connect_to_sensor():
+                # Start polling if connection successful
+                sensor_client.start_polling()
+                self._connection_retry_success()
+            else:
+                self._connection_retry_failed("Failed to establish connection")
+                
+        except Exception as e:
+            logger.error(f"Connection attempt failed: {e}")
+            self._connection_retry_failed(f"Connection failed: {str(e)}")
+
+    def _connection_retry_success(self):
+        """Handle successful connection retry"""
+        self.connection_refresh_btn.setEnabled(True)
+        self.connection_refresh_btn.setText("Retry Connection")
+        
+        # Show success message briefly
+        self.connection_status.setText("● Connected")
+        self.connection_status.setStyleSheet(f"color: {SUCCESS_COLOR}; font-weight: 600;")
+        
+        # Show a brief success notification
+        self.show_connection_message("Connection established successfully!", SUCCESS_COLOR)
+
+    def _connection_retry_failed(self, error_message):
+        """Handle failed connection retry"""
+        self.connection_refresh_btn.setEnabled(True)
+        self.connection_refresh_btn.setText("Retry Connection")
+        
+        # Update status to show failure
+        self.connection_status.setText("● Disconnected")
+        self.connection_status.setStyleSheet(f"color: {ERROR_COLOR}; font-weight: 600;")
+        
+        # Show error message
+        self.show_connection_message(f"Connection failed: {error_message}", ERROR_COLOR)
+
+    def show_connection_message(self, message, color):
+        """Show a temporary connection status message"""
+        # Create a temporary label to show the message
+        if not hasattr(self, 'temp_message_label'):
+            self.temp_message_label = QLabel()
+            self.temp_message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.temp_message_label.hide()
+            
+            # Add to layout (you might need to adjust this based on your layout)
+            if hasattr(self, 'centralWidget'):
+                central_layout = self.centralWidget().layout()
+                if central_layout:
+                    central_layout.insertWidget(1, self.temp_message_label)
+        
+        # Style and show the message
+        self.temp_message_label.setText(message)
+        self.temp_message_label.setStyleSheet(f"""
+            QLabel {{
+                background-color: {color};
+                color: white;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: 600;
+                margin: 4px;
+            }}
+        """)
+        self.temp_message_label.show()
+        
+        # Hide the message after 3 seconds
+        QTimer.singleShot(3000, self.temp_message_label.hide)
     
     def create_machine_selection(self, layout):
         """Create machine selection section"""
@@ -512,9 +638,15 @@ class DashboardWindow(QMainWindow):
         if connected:
             self.connection_status.setText("● Connected")
             self.connection_status.setStyleSheet(f"color: {SUCCESS_COLOR}; font-weight: 600;")
+            # Update button text when connected
+            self.connection_refresh_btn.setText("Retry Connection")
+            self.connection_refresh_btn.setEnabled(True)
         else:
             self.connection_status.setText("● Disconnected")
             self.connection_status.setStyleSheet(f"color: {ERROR_COLOR}; font-weight: 600;")
+            # Update button text when disconnected
+            self.connection_refresh_btn.setText("Retry Connection")
+            self.connection_refresh_btn.setEnabled(True)
     
     @pyqtSlot(str)
     def on_sensor_error(self, error_message):
