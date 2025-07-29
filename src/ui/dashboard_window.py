@@ -799,12 +799,22 @@ class DashboardWindow(QMainWindow):
     
     def logout(self):
         """Logout and close window"""
-        # Stop sensor communication
-        sensor_client.stop_polling()
-        sensor_client.disconnect_from_sensor()
+        # Ask for confirmation
+        reply = QMessageBox.question(
+            self, 
+            "Exit Confirmation", 
+            "Do you want to exit?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
         
-        auth_manager.logout()
-        self.close()
+        if reply == QMessageBox.StandardButton.Yes:
+            # Stop sensor communication
+            sensor_client.stop_polling()
+            sensor_client.disconnect_from_sensor()
+            
+            auth_manager.logout()
+            self.close()
     
     def closeEvent(self, event):
         """Handle window close event"""

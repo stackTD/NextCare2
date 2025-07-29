@@ -225,12 +225,12 @@ class LoginWindow(QDialog):
         
         # Validate input
         if not username:
-            self.show_error("Wrong password/username. Please try again.")
+            self.show_error("Please enter your username.")
             self.username_input.setFocus()
             return
         
         if not password:
-            self.show_error("Wrong password/username. Please try again.")
+            self.show_error("Please enter your password.")
             self.password_input.setFocus()
             return
         
@@ -251,12 +251,12 @@ class LoginWindow(QDialog):
                 if user:
                     self.show_success(f"Welcome, {user['full_name']}!")
                     
-                    # Emit successful login signal
+                    # Process events to show success message briefly
+                    QApplication.processEvents()
+                    
+                    # Emit signal for successful login
                     self.login_successful.emit(user)
                     
-                    # Close dialog after brief delay
-                    QApplication.processEvents()
-                    self.accept()
                 else:
                     self.show_error("Authentication error. Please try again.")
                     self.password_input.clear()
@@ -265,7 +265,7 @@ class LoginWindow(QDialog):
                 # Authentication failed - show error and stay open
                 self.show_error("Wrong password/username. Please try again.")
                 self.password_input.clear()
-                self.password_input.selectAll()  # Clear and select password field
+                self.password_input.selectAll()
                 self.password_input.setFocus()
                 
         except Exception as e:

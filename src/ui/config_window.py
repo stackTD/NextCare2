@@ -839,8 +839,16 @@ color: white;
     
     def logout(self):
         """Logout and close window"""
-        auth_manager.logout()
-        self.close()
+        reply = QMessageBox.question(
+            self, "Confirm Logout",
+            "Do you want to exit?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            auth_manager.logout()
+            self.close()
 
 if __name__ == "__main__":
     import sys
