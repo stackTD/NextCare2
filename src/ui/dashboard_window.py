@@ -150,11 +150,18 @@ class ParameterDetailDialog(QDialog):
     def __init__(self, parameter_data, parent=None):
         super().__init__(parent)
         self.parameter_data = parameter_data
+        self.parent_dashboard = parent
         self.setWindowTitle(f"Parameter Detail - {parameter_data['parameter_name']}")
         self.setMinimumSize(800, 600)
         
+        # Store data points for real-time plotting
+        self.timestamps = []
+        self.values = []
+        self.max_points = 100  # Maximum number of points to display
+        
         self.setup_ui()
         self.load_historical_data()
+        self.setup_real_time_updates()
         
     def setup_ui(self):
         """Setup the detail dialog UI"""
@@ -176,6 +183,11 @@ class ParameterDetailDialog(QDialog):
         
         header_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         
+        # Real-time indicator
+        self.realtime_indicator = QLabel("● Live")
+        self.realtime_indicator.setStyleSheet(f"color: {SUCCESS_COLOR}; font-weight: 600;")
+        header_layout.addWidget(self.realtime_indicator)
+        
         # Close button
         close_btn = QPushButton("Close")
         close_btn.clicked.connect(self.accept)
@@ -183,15 +195,14 @@ class ParameterDetailDialog(QDialog):
         
         layout.addLayout(header_layout)
         
-        # Parameter info
+        # Parameter info with live value
         info_group = QGroupBox("Parameter Information")
         info_layout = QGridLayout(info_group)
         
         info_layout.addWidget(QLabel("Current Value:"), 0, 0)
-        current_value = self.parameter_data.get('value', 0) or 0
-        value_label = QLabel(f"{current_value:.2f} {self.parameter_data.get('unit', '')}")
-        value_label.setStyleSheet(f"font-weight: bold; color: {PRIMARY_COLOR};")
-        info_layout.addWidget(value_label, 0, 1)
+        self.live_value_label = QLabel(f"{self.parameter_data.get('value', 0) or 0:.2f} {self.parameter_data.get('unit', '')}")
+        self.live_value_label.setStyleSheet(f"font-weight: bold; color: {PRIMARY_COLOR}; font-size: 16px;")
+        info_layout.addWidget(self.live_value_label, 0, 1)
         
         info_layout.addWidget(QLabel("Unit:"), 1, 0)
         info_layout.addWidget(QLabel(str(self.parameter_data.get('unit', 'N/A'))), 1, 1)
@@ -201,21 +212,37 @@ class ParameterDetailDialog(QDialog):
         info_layout.addWidget(QLabel(range_text), 2, 1)
         
         info_layout.addWidget(QLabel("Last Update:"), 3, 0)
-        timestamp = self.parameter_data.get('timestamp')
-        if timestamp:
-            time_str = timestamp.strftime("%Y-%m-%d %H:%M:%S")
-        else:
-            time_str = "No data"
-        info_layout.addWidget(QLabel(time_str), 3, 1)
+        self.last_update_label = QLabel("--")
+        info_layout.addWidget(self.last_update_label, 3, 1)
         
         layout.addWidget(info_group)
         
         # Trend chart
-        chart_group = QGroupBox("24-Hour Trend")
+        chart_group = QGroupBox("Real-time Trend")
         chart_layout = QVBoxLayout(chart_group)
         
+        # Chart controls
+        controls_layout = QHBoxLayout()
+        
+        # Time window selector
+        controls_layout.addWidget(QLabel("Time Window:"))
+        self.time_window_combo = QComboBox()
+        self.time_window_combo.addItems(["5 minutes", "15 minutes", "1 hour", "4 hours", "24 hours"])
+        self.time_window_combo.setCurrentText("15 minutes")
+        self.time_window_combo.currentTextChanged.connect(self.update_time_window)
+        controls_layout.addWidget(self.time_window_combo)
+        
+        controls_layout.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
+        
+        # Auto-scale button
+        self.autoscale_btn = QPushButton("Auto Scale")
+        self.autoscale_btn.clicked.connect(self.auto_scale_plot)
+        controls_layout.addWidget(self.autoscale_btn)
+        
+        chart_layout.addLayout(controls_layout)
+        
         # Create matplotlib figure
-        self.figure = Figure(figsize=(10, 4))
+        self.figure = Figure(figsize=(10, 5))
         self.canvas = FigureCanvas(self.figure)
         chart_layout.addWidget(self.canvas)
         
@@ -223,32 +250,116 @@ class ParameterDetailDialog(QDialog):
         
         self.setLayout(layout)
     
-    def load_historical_data(self):
-        """Load and plot historical data"""
+    def setup_real_time_updates(self):
+        """Setup real-time updates for the graph"""
+        # Create timer for real-time updates
+        self.update_timer = QTimer()
+        self.update_timer.timeout.connect(self.update_real_time_data)
+        self.update_timer.start(2000)  # Update every 2 seconds
+        
+        # Connect to parent's sensor data updates if available
+        if hasattr(self.parent_dashboard, 'sensor_data'):
+            # We'll check for updates in the timer callback
+            pass
+    
+    def update_real_time_data(self):
+        """Update graph with real-time data"""
         try:
-            parameter_id = self.parameter_data['parameter_id']
-            history = db_ops.get_parameter_history(parameter_id, hours=24)
+            # Get current parameter register for live data
+            parameter_id = self.parameter_data.get('parameter_id') or self.parameter_data.get('id')
+            if not parameter_id:
+                return
             
-            if not history:
-                # No historical data available
-                ax = self.figure.add_subplot(111)
-                ax.text(0.5, 0.5, 'No historical data available', 
+            # Get latest data from database
+            latest_data = db_ops.get_latest_sensor_data_for_parameter(parameter_id)
+            
+            if latest_data and latest_data.get('value') is not None:
+                current_time = datetime.now()
+                current_value = latest_data['value']
+                
+                # Update live value display
+                unit = self.parameter_data.get('unit', '')
+                self.live_value_label.setText(f"{current_value:.2f} {unit}")
+                
+                # Update last update time
+                if latest_data.get('timestamp'):
+                    time_str = latest_data['timestamp'].strftime("%Y-%m-%d %H:%M:%S")
+                    self.last_update_label.setText(time_str)
+                else:
+                    self.last_update_label.setText(current_time.strftime("%Y-%m-%d %H:%M:%S"))
+                
+                # Add to real-time data arrays
+                self.timestamps.append(current_time)
+                self.values.append(current_value)
+                
+                # Keep only recent data points
+                if len(self.timestamps) > self.max_points:
+                    self.timestamps.pop(0)
+                    self.values.pop(0)
+                
+                # Update the plot
+                self.update_plot()
+                
+                # Update real-time indicator
+                self.realtime_indicator.setText("● Live")
+                self.realtime_indicator.setStyleSheet(f"color: {SUCCESS_COLOR}; font-weight: 600;")
+            else:
+                # No recent data
+                self.realtime_indicator.setText("● No Data")
+                self.realtime_indicator.setStyleSheet(f"color: {WARNING_COLOR}; font-weight: 600;")
+                
+        except Exception as e:
+            logger.error(f"Error updating real-time data: {e}")
+            self.realtime_indicator.setText("● Error")
+            self.realtime_indicator.setStyleSheet(f"color: {ERROR_COLOR}; font-weight: 600;")
+    
+    def update_plot(self):
+        """Update the plot with current data"""
+        try:
+            if not self.timestamps or not self.values:
+                return
+            
+            # Clear the figure
+            self.figure.clear()
+            ax = self.figure.add_subplot(111)
+            
+            # Get time window
+            time_window_text = self.time_window_combo.currentText()
+            if "5 minutes" in time_window_text:
+                time_delta = timedelta(minutes=5)
+            elif "15 minutes" in time_window_text:
+                time_delta = timedelta(minutes=15)
+            elif "1 hour" in time_window_text:
+                time_delta = timedelta(hours=1)
+            elif "4 hours" in time_window_text:
+                time_delta = timedelta(hours=4)
+            else:  # 24 hours
+                time_delta = timedelta(hours=24)
+            
+            # Filter data based on time window
+            current_time = datetime.now()
+            cutoff_time = current_time - time_delta
+            
+            filtered_timestamps = []
+            filtered_values = []
+            
+            for i, timestamp in enumerate(self.timestamps):
+                if timestamp >= cutoff_time:
+                    filtered_timestamps.append(timestamp)
+                    filtered_values.append(self.values[i])
+            
+            if not filtered_timestamps:
+                # No data in current time window, show message
+                ax.text(0.5, 0.5, f'No data in last {time_window_text}', 
                        horizontalalignment='center', verticalalignment='center',
                        transform=ax.transAxes, fontsize=14, color='gray')
-                ax.set_title(f"{self.parameter_data['parameter_name']} - 24 Hour Trend")
+                ax.set_title(f"{self.parameter_data['parameter_name']} - Real-time Trend")
                 self.canvas.draw()
                 return
             
-            # Extract timestamps and values
-            timestamps = [row['timestamp'] for row in history]
-            values = [row['value'] for row in history]
-            
-            # Plot the data
-            ax = self.figure.add_subplot(111)
-            ax.clear()
-            
-            # Plot values
-            ax.plot(timestamps, values, linewidth=2, color=PRIMARY_COLOR, label='Value')
+            # Plot the filtered data
+            ax.plot(filtered_timestamps, filtered_values, linewidth=2, color=PRIMARY_COLOR, 
+                   label='Real-time Value', marker='o', markersize=3)
             
             # Add alarm thresholds
             alarm_low = self.parameter_data.get('alarm_low')
@@ -263,23 +374,98 @@ class ParameterDetailDialog(QDialog):
                           linewidth=1, alpha=0.7, label='High Alarm')
             
             # Formatting
-            ax.set_title(f"{self.parameter_data['parameter_name']} - 24 Hour Trend")
+            ax.set_title(f"{self.parameter_data['parameter_name']} - Real-time Trend ({time_window_text})")
             ax.set_xlabel('Time')
             ax.set_ylabel(f"Value ({self.parameter_data.get('unit', '')})")
             ax.grid(True, alpha=0.3)
             ax.legend()
             
-            # Format x-axis
+            # Format x-axis based on time window
             import matplotlib.dates as mdates
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-            ax.xaxis.set_major_locator(mdates.HourLocator(interval=4))
+            if time_delta.total_seconds() <= 3600:  # 1 hour or less
+                ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+                ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=max(1, int(time_delta.total_seconds()/300))))
+            else:
+                ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+                ax.xaxis.set_major_locator(mdates.HourLocator(interval=max(1, int(time_delta.total_seconds()/14400))))
+            
             plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
             
             self.figure.tight_layout()
             self.canvas.draw()
             
         except Exception as e:
+            logger.error(f"Error updating plot: {e}")
+    
+    def update_time_window(self):
+        """Handle time window change"""
+        # Reload historical data for new time window
+        self.load_historical_data()
+        self.update_plot()
+    
+    def auto_scale_plot(self):
+        """Auto-scale the plot"""
+        try:
+            ax = self.figure.gca()
+            ax.relim()
+            ax.autoscale_view()
+            self.canvas.draw()
+        except Exception as e:
+            logger.error(f"Error auto-scaling plot: {e}")
+    
+    def load_historical_data(self):
+        """Load and initialize with historical data"""
+        try:
+            parameter_id = self.parameter_data.get('parameter_id') or self.parameter_data.get('id')
+            
+            # Get time window
+            time_window_text = self.time_window_combo.currentText() if hasattr(self, 'time_window_combo') else "15 minutes"
+            
+            if "5 minutes" in time_window_text:
+                hours = 0.083  # 5 minutes
+            elif "15 minutes" in time_window_text:
+                hours = 0.25  # 15 minutes  
+            elif "1 hour" in time_window_text:
+                hours = 1
+            elif "4 hours" in time_window_text:
+                hours = 4
+            else:  # 24 hours
+                hours = 24
+            
+            history = db_ops.get_parameter_history(parameter_id, hours=hours)
+            
+            if history:
+                # Initialize with historical data
+                self.timestamps = [row['timestamp'] for row in history]
+                self.values = [row['value'] for row in history]
+                
+                # Limit to max_points
+                if len(self.timestamps) > self.max_points:
+                    self.timestamps = self.timestamps[-self.max_points:]
+                    self.values = self.values[-self.max_points:]
+            else:
+                self.timestamps = []
+                self.values = []
+            
+            # Initial plot
+            self.update_plot()
+            
+        except Exception as e:
             logger.error(f"Error loading historical data: {e}")
+    
+    def closeEvent(self, event):
+        """Handle dialog close"""
+        # Stop the update timer
+        if hasattr(self, 'update_timer'):
+            self.update_timer.stop()
+        event.accept()
+    
+    def accept(self):
+        """Handle dialog accept"""
+        # Stop the update timer
+        if hasattr(self, 'update_timer'):
+            self.update_timer.stop()
+        super().accept()
 
 class DashboardWindow(QMainWindow):
     """Main dashboard window with real-time monitoring"""
@@ -860,7 +1046,7 @@ class DashboardWindow(QMainWindow):
                     
                     status_item = QTableWidgetItem(status)
                     status_item.setBackground(QColor(status_color))
-                    status_item.setForeground(QColor("white"))
+                    status_item.setForeground(QColor("black"))
                     self.parameters_table.setItem(row, 3, status_item)
                     
                     # Update timestamp

@@ -235,6 +235,39 @@ class DatabaseOperations:
         start_time = datetime.now() - timedelta(hours=hours)
         return self.db.execute_query(query, (parameter_id, start_time)) or []
     
+    def get_latest_sensor_data_for_parameter(self, parameter_id: int) -> Optional[Dict[str, Any]]:
+        """Get latest sensor data for a specific parameter"""
+        try:
+            query = """
+            SELECT sd.id, sd.parameter_id, sd.value, sd.timestamp, sd.quality,
+                   p.name as parameter_name, p.unit, p.register_address
+            FROM sensor_data sd
+            JOIN parameters p ON sd.parameter_id = p.id
+            WHERE sd.parameter_id = %s
+            ORDER BY sd.timestamp DESC
+            LIMIT 1
+            """
+            
+            result = self.db.execute_query(query, (parameter_id,))
+            
+            if result and len(result) > 0:
+                row = result[0]
+                return {
+                    'id': row['id'],
+                    'parameter_id': row['parameter_id'],
+                    'value': row['value'],
+                    'timestamp': row['timestamp'] if isinstance(row['timestamp'], datetime) else datetime.fromisoformat(str(row['timestamp'])),
+                    'quality': bool(row['quality']),
+                    'parameter_name': row['parameter_name'],
+                    'unit': row['unit'],
+                    'register_address': row['register_address']
+                }
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error getting latest sensor data for parameter: {e}")
+            return None
+    
     # User Access Management
     def grant_machine_access(self, user_id: int, machine_id: int) -> bool:
         """Grant user access to a machine"""
